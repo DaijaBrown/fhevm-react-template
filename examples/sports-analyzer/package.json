@@ -1,0 +1,26 @@
+{
+  "name": "@fhevm-example/sports-analyzer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sports performance analyzer with FHEVM for privacy-preserving athlete data",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fhevm/sdk": "workspace:*",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "ethers": "^6.10.0",
+    "fhevmjs": "^0.5.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.48",
+    "@types/react-dom": "^18.2.18",
+    "@vitejs/plugin-react": "^4.2.1",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.11"
+  }
+}
