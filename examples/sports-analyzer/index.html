@@ -1,14 +1,672 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Private Sports Analyzer - FHEVM</title>
-    <meta name="description" content="Privacy-preserving athlete performance tracking with FHEVM" />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Private Sports Analyzer - Confidential Performance Tracking</title>
+    <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js" onerror="loadEthersFromBackup()"></script>
+    <script src="https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js" id="ethers-backup" style="display:none"></script>
+    <script>
+        function loadEthersFromBackup() {
+            console.log('Primary ethers CDN failed, loading backup...');
+            document.getElementById('ethers-backup').style.display = 'block';
+            document.getElementById('ethers-backup').onload = function() {
+                window.ethers = window.ethers || ethers;
+                console.log('Ethers loaded from backup CDN');
+            };
+        }
+
+        // Ensure ethers is available globally after page load
+        window.addEventListener('load', function() {
+            if (typeof ethers === 'undefined') {
+                console.error('Ethers.js failed to load from both CDNs');
+                document.getElementById('connectionStatus').innerHTML = '<div class="status error">Failed to load Ethers.js library. Please refresh the page.</div>';
+            } else {
+                window.ethers = ethers;
+                console.log('Ethers.js loaded successfully');
+            }
+        });
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .card h3 {
+            color: #00d4ff;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            border-bottom: 2px solid rgba(0, 212, 255, 0.3);
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #b0b0b0;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+            background: rgba(255, 255, 255, 0.05);
+            color: #e0e0e0;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #00d4ff;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #00d4ff 0%, #0084ff 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-weight: 600;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.info {
+            background: #cce7ff;
+            color: #004085;
+            border: 1px solid #99d6ff;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .stats-card {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .stats-card .number {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #00d4ff;
+            display: block;
+        }
+
+        .stats-card .label {
+            color: #b0b0b0;
+            font-size: 1.1rem;
+            margin-top: 10px;
+        }
+
+        .performance-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .metric-input {
+            text-align: center;
+        }
+
+        .metric-input label {
+            font-size: 0.9rem;
+            color: #b0b0b0;
+        }
+
+        .privacy-note {
+            background: rgba(255, 193, 7, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #ffc107;
+        }
+
+        .privacy-note strong {
+            color: #ffc107;
+        }
+
+        .leaderboard-entry {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+            transition: background 0.2s;
+        }
+
+        .leaderboard-entry:hover {
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        .athlete-address {
+            font-family: monospace;
+            font-size: 0.9rem;
+            color: #b0b0b0;
+        }
+
+        #walletStatus {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 212, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            color: #e0e0e0;
+        }
+
+        .network-info {
+            background: linear-gradient(135deg, #00d4ff 0%, #0084ff 100%);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .contract-info {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #00d4ff;
+        }
+
+        .contract-info code {
+            background: rgba(0, 212, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            color: #00d4ff;
+        }
+    </style>
+</head>
+<body>
+    <div id="walletStatus">🔌 Not Connected</div>
+
+    <div class="container">
+        <div class="header">
+            <h1>🏃‍♂️ Private Sports Analyzer</h1>
+            <p>Confidential Performance Evaluation with Zero-Knowledge Privacy</p>
+        </div>
+
+        <div class="card">
+            <h3>🔐 Wallet Connection</h3>
+            <div class="network-info">
+                <strong>Network:</strong> Sepolia Testnet | <strong>Protocol:</strong> Zama fhEVM
+            </div>
+            <button class="btn" onclick="connectWallet()">Connect MetaMask</button>
+            <div id="connectionStatus"></div>
+
+            <div class="contract-info">
+                <strong>Smart Contract:</strong><br>
+                <code id="contractAddress">Deploy contract and update address</code>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>📝 Athlete Registration</h3>
+            <div class="form-group">
+                <label for="sport">Choose Your Sport:</label>
+                <select id="sport">
+                    <option value="">Select Sport</option>
+                    <option value="Running">Running</option>
+                    <option value="Cycling">Cycling</option>
+                    <option value="Swimming">Swimming</option>
+                    <option value="Weightlifting">Weightlifting</option>
+                    <option value="Basketball">Basketball</option>
+                    <option value="Football">Football</option>
+                    <option value="Tennis">Tennis</option>
+                    <option value="Yoga">Yoga</option>
+                    <option value="CrossFit">CrossFit</option>
+                    <option value="Boxing">Boxing</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <button class="btn" onclick="registerAthlete()">Register as Athlete</button>
+            <div id="registrationStatus"></div>
+        </div>
+
+        <div class="card">
+            <h3>📊 Record Performance Session</h3>
+            <div class="privacy-note">
+                <strong>🔒 Privacy Guaranteed:</strong> All performance data is encrypted using Zama FHE technology. Your personal metrics remain completely confidential while still enabling analysis.
+            </div>
+
+            <div class="performance-grid">
+                <div class="metric-input">
+                    <label for="heartRate">Heart Rate (BPM)</label>
+                    <input type="number" id="heartRate" min="60" max="300" placeholder="120">
+                </div>
+                <div class="metric-input">
+                    <label for="calories">Calories Burned</label>
+                    <input type="number" id="calories" min="0" max="5000" placeholder="500">
+                </div>
+                <div class="metric-input">
+                    <label for="duration">Duration (mins)</label>
+                    <input type="number" id="duration" min="1" max="1440" placeholder="45">
+                </div>
+                <div class="metric-input">
+                    <label for="distance">Distance (m)</label>
+                    <input type="number" id="distance" min="0" max="50000" placeholder="5000">
+                </div>
+                <div class="metric-input">
+                    <label for="intensity">Intensity (1-10)</label>
+                    <input type="number" id="intensity" min="1" max="10" placeholder="7">
+                </div>
+                <div class="metric-input">
+                    <label for="recovery">Recovery (mins)</label>
+                    <input type="number" id="recovery" min="0" max="2880" placeholder="180">
+                </div>
+            </div>
+
+            <button class="btn" onclick="recordPerformance()">Record Session</button>
+            <div id="performanceStatus"></div>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <h3>📈 Update Analysis</h3>
+                <p>Generate your confidential performance analysis based on recorded sessions.</p>
+                <button class="btn" onclick="updateAnalysis()">Update Analysis</button>
+                <div id="analysisStatus"></div>
+            </div>
+
+            <div class="card">
+                <h3>🏆 Join Leaderboard</h3>
+                <div class="form-group">
+                    <label for="category">Category:</label>
+                    <select id="category">
+                        <option value="Overall">Overall Performance</option>
+                        <option value="Endurance">Endurance</option>
+                        <option value="Strength">Strength</option>
+                        <option value="Consistency">Consistency</option>
+                        <option value="Recovery">Recovery</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="submitToLeaderboard()">Submit to Leaderboard</button>
+                <div id="leaderboardStatus"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>🎯 Goal Achievement Check</h3>
+            <div class="performance-grid">
+                <div class="metric-input">
+                    <label for="targetHR">Target Avg HR</label>
+                    <input type="number" id="targetHR" min="60" max="220" placeholder="140">
+                </div>
+                <div class="metric-input">
+                    <label for="targetCalories">Target Total Calories</label>
+                    <input type="number" id="targetCalories" min="0" max="10000" placeholder="2000">
+                </div>
+                <div class="metric-input">
+                    <label for="targetDuration">Target Total Duration</label>
+                    <input type="number" id="targetDuration" min="0" max="10000" placeholder="300">
+                </div>
+            </div>
+            <button class="btn" onclick="checkGoal()">Check Goal Achievement</button>
+            <div id="goalStatus"></div>
+        </div>
+
+        <div class="card">
+            <h3>📊 Contract Statistics</h3>
+            <div class="grid">
+                <div class="stats-card">
+                    <span class="number" id="totalAthletes">0</span>
+                    <span class="label">Total Athletes</span>
+                </div>
+                <div class="stats-card">
+                    <span class="number" id="totalSessions">0</span>
+                    <span class="label">Total Sessions</span>
+                </div>
+            </div>
+            <button class="btn" onclick="loadStats()">Refresh Stats</button>
+        </div>
+    </div>
+
+    <script>
+        // Contract configuration - Update with your deployed contract address
+        const CONTRACT_ADDRESS = "0x430f85Cc4Ea7bddA82fd6Dd156A06747EdeC0313"; // Sepolia testnet
+        const CONTRACT_ABI = [
+            "function registerAthlete(string memory _sport) external",
+            "function recordPerformance(uint32 _heartRate, uint32 _calories, uint16 _duration, uint16 _distance, uint8 _intensity, uint32 _recoveryTime) external",
+            "function updateAnalysis() external",
+            "function submitToLeaderboard(string memory _category) external",
+            "function checkGoalAchievement(uint32 _targetHeartRate, uint32 _targetCalories, uint32 _targetDuration, string memory _goalType) external",
+            "function getAthleteProfile(address _athlete) external view returns (bool, string memory, uint256, uint256)",
+            "function getContractStats() external view returns (uint256, uint256)",
+            "event AthleteRegistered(address indexed athlete, string sport)",
+            "event SessionRecorded(address indexed athlete, uint256 sessionId)",
+            "event AnalysisUpdated(address indexed athlete)",
+            "event LeaderboardUpdated(string category, address indexed athlete)",
+            "event GoalAchieved(address indexed athlete, string goalType)"
+        ];
+
+        let provider, signer, contract, userAccount;
+
+        async function connectWallet() {
+            // Check if ethers is loaded
+            if (typeof ethers === 'undefined') {
+                document.getElementById('connectionStatus').innerHTML = '<div class="status error">Ethers.js library not loaded. Please refresh the page.</div>';
+                return;
+            }
+
+            if (typeof window.ethereum !== 'undefined') {
+                try {
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    provider = new ethers.providers.Web3Provider(window.ethereum);
+                    signer = provider.getSigner();
+                    userAccount = await signer.getAddress();
+
+                    // Check network
+                    const network = await provider.getNetwork();
+                    console.log('Connected to network:', network.name, 'Chain ID:', network.chainId);
+
+                    contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+
+                    document.getElementById('walletStatus').innerHTML = `🟢 Connected: ${userAccount.slice(0, 6)}...${userAccount.slice(-4)}`;
+                    document.getElementById('connectionStatus').innerHTML = `<div class="status success">Connected to ${userAccount}<br>Network: ${network.name} (${network.chainId})</div>`;
+                    document.getElementById('contractAddress').textContent = CONTRACT_ADDRESS;
+
+                    loadStats();
+                    checkRegistration();
+                } catch (error) {
+                    document.getElementById('connectionStatus').innerHTML = `<div class="status error">Connection failed: ${error.message}</div>`;
+                }
+            } else {
+                document.getElementById('connectionStatus').innerHTML = `<div class="status error">MetaMask not installed. Please install MetaMask to use this application.</div>`;
+            }
+        }
+
+        async function checkRegistration() {
+            if (!contract || !userAccount) return;
+
+            try {
+                const profile = await contract.getAthleteProfile(userAccount);
+                if (profile[0]) {
+                    document.getElementById('registrationStatus').innerHTML = `<div class="status success">Registered athlete - Sport: ${profile[1]} | Sessions: ${profile[3]}</div>`;
+                } else {
+                    document.getElementById('registrationStatus').innerHTML = `<div class="status info">Not registered. Please register to start tracking performance.</div>`;
+                }
+            } catch (error) {
+                console.error('Error checking registration:', error);
+                document.getElementById('registrationStatus').innerHTML = `<div class="status error">Error checking registration: ${error.message}</div>`;
+            }
+        }
+
+        async function registerAthlete() {
+            if (!contract) {
+                alert('Please connect your wallet first');
+                return;
+            }
+
+            const sport = document.getElementById('sport').value;
+            if (!sport) {
+                alert('Please select a sport');
+                return;
+            }
+
+            try {
+                document.getElementById('registrationStatus').innerHTML = `<div class="status info">Registering athlete...</div>`;
+                const tx = await contract.registerAthlete(sport);
+                document.getElementById('registrationStatus').innerHTML = `<div class="status info">Transaction sent. Waiting for confirmation...</div>`;
+                await tx.wait();
+
+                document.getElementById('registrationStatus').innerHTML = `<div class="status success">Successfully registered as ${sport} athlete!</div>`;
+                loadStats();
+            } catch (error) {
+                document.getElementById('registrationStatus').innerHTML = `<div class="status error">Registration failed: ${error.message}</div>`;
+            }
+        }
+
+        async function recordPerformance() {
+            if (!contract) {
+                alert('Please connect your wallet first');
+                return;
+            }
+
+            const heartRate = document.getElementById('heartRate').value;
+            const calories = document.getElementById('calories').value;
+            const duration = document.getElementById('duration').value;
+            const distance = document.getElementById('distance').value;
+            const intensity = document.getElementById('intensity').value;
+            const recovery = document.getElementById('recovery').value;
+
+            if (!heartRate || !calories || !duration || !distance || !intensity || !recovery) {
+                alert('Please fill in all performance metrics');
+                return;
+            }
+
+            try {
+                document.getElementById('performanceStatus').innerHTML = `<div class="status info">Recording encrypted performance data...</div>`;
+                const tx = await contract.recordPerformance(
+                    parseInt(heartRate),
+                    parseInt(calories),
+                    parseInt(duration),
+                    parseInt(distance),
+                    parseInt(intensity),
+                    parseInt(recovery)
+                );
+                document.getElementById('performanceStatus').innerHTML = `<div class="status info">Transaction sent. Waiting for confirmation...</div>`;
+                await tx.wait();
+
+                document.getElementById('performanceStatus').innerHTML = `<div class="status success">Performance session recorded successfully with full privacy protection!</div>`;
+
+                // Clear form
+                document.getElementById('heartRate').value = '';
+                document.getElementById('calories').value = '';
+                document.getElementById('duration').value = '';
+                document.getElementById('distance').value = '';
+                document.getElementById('intensity').value = '';
+                document.getElementById('recovery').value = '';
+
+                loadStats();
+                checkRegistration();
+            } catch (error) {
+                document.getElementById('performanceStatus').innerHTML = `<div class="status error">Recording failed: ${error.message}</div>`;
+            }
+        }
+
+        async function updateAnalysis() {
+            if (!contract) {
+                alert('Please connect your wallet first');
+                return;
+            }
+
+            try {
+                document.getElementById('analysisStatus').innerHTML = `<div class="status info">Updating confidential performance analysis...</div>`;
+                const tx = await contract.updateAnalysis();
+                document.getElementById('analysisStatus').innerHTML = `<div class="status info">Transaction sent. Waiting for confirmation...</div>`;
+                await tx.wait();
+
+                document.getElementById('analysisStatus').innerHTML = `<div class="status success">Analysis updated! Your performance metrics have been confidentially processed.</div>`;
+            } catch (error) {
+                document.getElementById('analysisStatus').innerHTML = `<div class="status error">Analysis update failed: ${error.message}</div>`;
+            }
+        }
+
+        async function submitToLeaderboard() {
+            if (!contract) {
+                alert('Please connect your wallet first');
+                return;
+            }
+
+            const category = document.getElementById('category').value;
+
+            try {
+                document.getElementById('leaderboardStatus').innerHTML = `<div class="status info">Submitting encrypted score to ${category} leaderboard...</div>`;
+                const tx = await contract.submitToLeaderboard(category);
+                document.getElementById('leaderboardStatus').innerHTML = `<div class="status info">Transaction sent. Waiting for confirmation...</div>`;
+                await tx.wait();
+
+                document.getElementById('leaderboardStatus').innerHTML = `<div class="status success">Successfully submitted to ${category} leaderboard! Your score remains encrypted.</div>`;
+            } catch (error) {
+                document.getElementById('leaderboardStatus').innerHTML = `<div class="status error">Leaderboard submission failed: ${error.message}</div>`;
+            }
+        }
+
+        async function checkGoal() {
+            if (!contract) {
+                alert('Please connect your wallet first');
+                return;
+            }
+
+            const targetHR = document.getElementById('targetHR').value;
+            const targetCalories = document.getElementById('targetCalories').value;
+            const targetDuration = document.getElementById('targetDuration').value;
+
+            if (!targetHR || !targetCalories || !targetDuration) {
+                alert('Please fill in all goal targets');
+                return;
+            }
+
+            try {
+                document.getElementById('goalStatus').innerHTML = `<div class="status info">Checking goal achievement privately...</div>`;
+                const tx = await contract.checkGoalAchievement(
+                    parseInt(targetHR),
+                    parseInt(targetCalories),
+                    parseInt(targetDuration),
+                    "Performance Goals"
+                );
+                document.getElementById('goalStatus').innerHTML = `<div class="status info">Transaction sent. Waiting for confirmation...</div>`;
+                await tx.wait();
+
+                document.getElementById('goalStatus').innerHTML = `<div class="status success">Goal check initiated! Result will be processed confidentially.</div>`;
+            } catch (error) {
+                document.getElementById('goalStatus').innerHTML = `<div class="status error">Goal check failed: ${error.message}</div>`;
+            }
+        }
+
+        async function loadStats() {
+            if (!contract) return;
+
+            try {
+                const stats = await contract.getContractStats();
+                document.getElementById('totalAthletes').textContent = stats[0].toString();
+                document.getElementById('totalSessions').textContent = stats[1].toString();
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Event listeners
+        if (typeof window.ethereum !== 'undefined') {
+            window.ethereum.on('accountsChanged', function (accounts) {
+                if (accounts.length === 0) {
+                    document.getElementById('walletStatus').innerHTML = '🔌 Not Connected';
+                    document.getElementById('connectionStatus').innerHTML = '<div class="status error">Wallet disconnected</div>';
+                } else {
+                    connectWallet();
+                }
+            });
+
+            window.ethereum.on('chainChanged', function () {
+                window.location.reload();
+            });
+        }
+
+        // Auto-connect on page load if previously connected
+        window.addEventListener('load', async () => {
+            if (typeof window.ethereum !== 'undefined') {
+                const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                if (accounts.length > 0) {
+                    connectWallet();
+                }
+            }
+        });
+    </script>
+</body>
 </html>
