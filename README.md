@@ -150,7 +150,13 @@ fhevm-react-template/
 │   │   ├── package.json
 │   │   └── README.md
 │   │
-│   └── sports-analyzer/              # Sports Analyzer dApp
+│   ├── sports-analyzer/              # Sports Analyzer dApp
+│   │   ├── src/                      # React source
+│   │   ├── contracts/                # Smart contracts
+│   │   ├── package.json
+│   │   └── README.md
+│   │
+│   └── PrivateSportsAnalyzer/        # Private Sports Analyzer dApp
 │       ├── src/                      # React source
 │       ├── contracts/                # Smart contracts
 │       ├── package.json
@@ -353,6 +359,36 @@ npm run dev:sports
 
 **Learn more:** See [examples/sports-analyzer/README.md](./examples/sports-analyzer/README.md)
 
+### 3. Private Sports Analyzer (Enhanced React Example)
+
+An enhanced privacy-preserving sports performance tracking dApp built with React and Vite.
+
+**Location:** `examples/PrivateSportsAnalyzer/`
+
+**Features:**
+- Full React + TypeScript implementation with SDK integration
+- Athlete registration system with sport selection
+- Encrypted performance metrics recording:
+  - Heart rate monitoring (BPM)
+  - Calorie tracking
+  - Duration and distance metrics
+  - Intensity levels (1-10 scale)
+  - Recovery time tracking
+- Confidential analysis updates
+- Privacy-preserving leaderboard submissions
+- Goal achievement verification
+- Real-time contract statistics display
+- Complete FhevmProvider and hooks integration
+
+**Contract:** `PrivateSportsAnalyzer.sol` - Full FHEVM smart contract with encrypted data handling
+
+**Run it:**
+```bash
+npm run dev:private-sports
+```
+
+**Learn more:** See [examples/PrivateSportsAnalyzer/README.md](./examples/PrivateSportsAnalyzer/README.md)
+
 ---
 
 ## 💻 Development
@@ -385,6 +421,7 @@ npm run install:all      # Install all workspace dependencies
 npm run build:sdk        # Build the core SDK package
 npm run dev:nextjs       # Run Next.js example
 npm run dev:sports       # Run Sports Analyzer example
+npm run dev:private-sports  # Run Private Sports Analyzer example
 npm run clean            # Clean all build artifacts
 ```
 

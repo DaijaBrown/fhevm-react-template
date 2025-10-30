@@ -13,6 +13,7 @@
     "build:contracts": "cd contracts && npm run compile",
     "dev:nextjs": "npm run dev --workspace=examples/nextjs",
     "dev:sports": "npm run dev --workspace=examples/sports-analyzer",
+    "dev:private-sports": "npm run dev --workspace=examples/PrivateSportsAnalyzer",
     "build:all": "npm run build:sdk && npm run build --workspaces",
     "test": "npm test --workspaces",
     "lint": "npm run lint --workspaces",
